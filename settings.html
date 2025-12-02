@@ -274,6 +274,8 @@
 
     <div class="footer">
       <div>Settings are saved automatically on this PC (localStorage).</div>
+      <!-- NEW: reset-to-defaults button, same style as other footer buttons -->
+      <button id="resetDefaultsBtn">Reset to defaults</button>
       <button id="openDisplayBtn">Open display in new tab</button>
     </div>
   </div>
@@ -318,6 +320,7 @@
     const loadPresetBtn     = document.getElementById('loadPresetBtn');
     const deletePresetBtn   = document.getElementById('deletePresetBtn');
     const openDisplayBtn    = document.getElementById('openDisplayBtn');
+    const resetDefaultsBtn  = document.getElementById('resetDefaultsBtn'); // NEW
 
     function defaultSettings() {
       return {
@@ -429,6 +432,17 @@
         s = defaultSettings();
       }
       applySettingsToForm(s);
+    }
+
+    // NEW: reset to defaults (UI + localStorage)
+    function resetSettingsToDefaults() {
+      const s = defaultSettings();
+      applySettingsToForm(s);
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+      } catch (e) {
+        console.error('Failed to reset settings to defaults', e);
+      }
     }
 
     function updateModeVisibility() {
@@ -551,6 +565,9 @@
       saveSettings();
       window.open('display.html', '_blank');
     });
+
+    // NEW: wire up reset button
+    resetDefaultsBtn.addEventListener('click', resetSettingsToDefaults);
 
     // Init
     loadSettings();
