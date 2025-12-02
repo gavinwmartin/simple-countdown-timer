@@ -65,3 +65,6 @@ When running the countdown, you can use the following keyboard shortcuts:
 - `Space` - starts and pauses the timer
 - `F` - toggles fullscreen mode on or off
 - `R` - resets the timer to the last set settings
+
+## License
+This project is licensed under the MIT License — see the LICENSE file for details.
