@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Countdown Settings</title>
@@ -8,28 +9,34 @@
     :root {
       color-scheme: dark;
     }
-    html, body {
+
+    html,
+    body {
       margin: 0;
       padding: 0;
       background: #000;
       color: #fff;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+
     .container {
       max-width: 900px;
       margin: 0 auto;
       padding: 20px;
     }
+
     h1 {
       margin-top: 0;
       font-size: 24px;
     }
+
     h2 {
       margin-top: 24px;
       font-size: 18px;
       border-bottom: 1px solid #333;
       padding-bottom: 4px;
     }
+
     .section {
       margin-top: 12px;
       padding: 10px 12px;
@@ -37,6 +44,7 @@
       border-radius: 6px;
       border: 1px solid #222;
     }
+
     .row {
       display: flex;
       flex-wrap: wrap;
@@ -44,9 +52,11 @@
       align-items: center;
       margin-bottom: 8px;
     }
+
     label {
       font-size: 14px;
     }
+
     input[type="time"],
     input[type="number"],
     input[type="text"],
@@ -58,6 +68,7 @@
       padding: 4px 6px;
       font-size: 14px;
     }
+
     input[type="color"] {
       background: #222;
       border: 1px solid #444;
@@ -66,22 +77,27 @@
       width: 40px;
       height: 24px;
     }
+
     input[type="checkbox"] {
       transform: scale(1.1);
       margin-right: 4px;
     }
+
     input[type="file"] {
       font-size: 13px;
     }
+
     .small-input {
       width: 4em;
     }
+
     .buttons {
       margin-top: 16px;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
     }
+
     button {
       background: #444;
       color: #fff;
@@ -91,14 +107,17 @@
       font-size: 14px;
       cursor: pointer;
     }
+
     button:hover {
       background: #666;
     }
+
     .hint {
       font-size: 12px;
       opacity: 0.7;
       margin-top: 4px;
     }
+
     .preset-row {
       display: flex;
       flex-wrap: wrap;
@@ -106,10 +125,12 @@
       align-items: center;
       margin-top: 8px;
     }
+
     .preset-row input[type="text"] {
       flex: 1;
       min-width: 120px;
     }
+
     .footer {
       margin-top: 24px;
       padding-top: 12px;
@@ -121,14 +142,17 @@
       flex-wrap: wrap;
       gap: 8px;
     }
+
     .footer button {
       background: #2a6ad6;
     }
+
     .footer button:hover {
       background: #3c7ff0;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Countdown Settings</h1>
@@ -295,7 +319,8 @@
         <button id="deletePresetBtn">Delete</button>
       </div>
       <div class="hint">
-        Presets store all settings above (mode, duration/time, colours, alerts, message, sizes, background image, fade time).
+        Presets store all settings above (mode, duration/time, colours, alerts, message, sizes, background image, fade
+        time).
       </div>
     </div>
 
@@ -308,21 +333,21 @@
 
   <script>
     const SETTINGS_KEY = 'countdownSettings';
-    const PRESETS_KEY  = 'countdownPresets';
+    const PRESETS_KEY = 'countdownPresets';
 
     const modeDurationRadio = document.getElementById('modeDuration');
-    const modeTimeRadio     = document.getElementById('modeTime');
-    const durationRow       = document.getElementById('durationRow');
-    const timeRow           = document.getElementById('timeRow');
+    const modeTimeRadio = document.getElementById('modeTime');
+    const durationRow = document.getElementById('durationRow');
+    const timeRow = document.getElementById('timeRow');
 
-    const durHoursInput   = document.getElementById('durHours');
+    const durHoursInput = document.getElementById('durHours');
     const durMinutesInput = document.getElementById('durMinutes');
     const durSecondsInput = document.getElementById('durSeconds');
     const targetTimeInput = document.getElementById('targetTime');
 
-    const bgColorInput    = document.getElementById('bgColor');
-    const textColorInput  = document.getElementById('textColor');
-    const timerSizeInput  = document.getElementById('timerSize');
+    const bgColorInput = document.getElementById('bgColor');
+    const textColorInput = document.getElementById('textColor');
+    const timerSizeInput = document.getElementById('timerSize');
     const fadeToBlackSecondsInput = document.getElementById('fadeToBlackSeconds');
     const showStatusInput = document.getElementById('showStatus');
     const bgImageFileInput = document.getElementById('bgImageFile');
@@ -333,25 +358,25 @@
     const messageTextInput = document.getElementById('messageText');
     const messageSizeInput = document.getElementById('messageSize');
 
-    const alert1EnabledInput  = document.getElementById('alert1Enabled');
-    const alert1MinutesInput  = document.getElementById('alert1Minutes');
-    const alert1SecondsInput  = document.getElementById('alert1Seconds');
-    const alert1BgInput       = document.getElementById('alert1Bg');
-    const alert1TextInput     = document.getElementById('alert1Text');
+    const alert1EnabledInput = document.getElementById('alert1Enabled');
+    const alert1MinutesInput = document.getElementById('alert1Minutes');
+    const alert1SecondsInput = document.getElementById('alert1Seconds');
+    const alert1BgInput = document.getElementById('alert1Bg');
+    const alert1TextInput = document.getElementById('alert1Text');
 
-    const alert2EnabledInput  = document.getElementById('alert2Enabled');
-    const alert2MinutesInput  = document.getElementById('alert2Minutes');
-    const alert2SecondsInput  = document.getElementById('alert2Seconds');
-    const alert2BgInput       = document.getElementById('alert2Bg');
-    const alert2TextInput     = document.getElementById('alert2Text');
+    const alert2EnabledInput = document.getElementById('alert2Enabled');
+    const alert2MinutesInput = document.getElementById('alert2Minutes');
+    const alert2SecondsInput = document.getElementById('alert2Seconds');
+    const alert2BgInput = document.getElementById('alert2Bg');
+    const alert2TextInput = document.getElementById('alert2Text');
 
-    const presetNameInput   = document.getElementById('presetName');
-    const presetSelect      = document.getElementById('presetSelect');
-    const savePresetBtn     = document.getElementById('savePresetBtn');
-    const loadPresetBtn     = document.getElementById('loadPresetBtn');
-    const deletePresetBtn   = document.getElementById('deletePresetBtn');
-    const openDisplayBtn    = document.getElementById('openDisplayBtn');
-    const resetDefaultsBtn  = document.getElementById('resetDefaultsBtn');
+    const presetNameInput = document.getElementById('presetName');
+    const presetSelect = document.getElementById('presetSelect');
+    const savePresetBtn = document.getElementById('savePresetBtn');
+    const loadPresetBtn = document.getElementById('loadPresetBtn');
+    const deletePresetBtn = document.getElementById('deletePresetBtn');
+    const openDisplayBtn = document.getElementById('openDisplayBtn');
+    const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
 
     function defaultSettings() {
       return {
@@ -392,12 +417,12 @@
       }
       updateModeVisibility();
 
-      durHoursInput.value   = s.durHours;
+      durHoursInput.value = s.durHours;
       durMinutesInput.value = s.durMinutes;
       durSecondsInput.value = s.durSeconds;
       targetTimeInput.value = s.targetTime;
 
-      bgColorInput.value   = s.bgColor;
+      bgColorInput.value = s.bgColor;
       textColorInput.value = s.textColor;
       timerSizeInput.value = s.timerSize;
       fadeToBlackSecondsInput.value = s.fadeToBlackSeconds;
@@ -411,26 +436,26 @@
       messageSizeInput.value = s.messageSize;
 
       alert1EnabledInput.checked = !!s.alert1Enabled;
-      alert1MinutesInput.value   = s.alert1Minutes;
-      alert1SecondsInput.value   = s.alert1Seconds;
-      alert1BgInput.value        = s.alert1Bg;
-      alert1TextInput.value      = s.alert1Text;
+      alert1MinutesInput.value = s.alert1Minutes;
+      alert1SecondsInput.value = s.alert1Seconds;
+      alert1BgInput.value = s.alert1Bg;
+      alert1TextInput.value = s.alert1Text;
 
       alert2EnabledInput.checked = !!s.alert2Enabled;
-      alert2MinutesInput.value   = s.alert2Minutes;
-      alert2SecondsInput.value   = s.alert2Seconds;
-      alert2BgInput.value        = s.alert2Bg;
-      alert2TextInput.value      = s.alert2Text;
+      alert2MinutesInput.value = s.alert2Minutes;
+      alert2SecondsInput.value = s.alert2Seconds;
+      alert2BgInput.value = s.alert2Bg;
+      alert2TextInput.value = s.alert2Text;
     }
 
     function getCurrentSettingsFromForm() {
       return {
         mode: modeTimeRadio.checked ? 'time' : 'duration',
-        durHours:   durHoursInput.value || '0',
+        durHours: durHoursInput.value || '0',
         durMinutes: durMinutesInput.value || '0',
         durSeconds: durSecondsInput.value || '0',
         targetTime: targetTimeInput.value || '',
-        bgColor:   bgColorInput.value || '#000000',
+        bgColor: bgColorInput.value || '#000000',
         textColor: textColorInput.value || '#ffffff',
         timerSize: Number(timerSizeInput.value || '20'),
         fadeToBlackSeconds: Math.max(0, Number(fadeToBlackSecondsInput.value || '5')),
@@ -633,4 +658,5 @@
     loadPresetsIntoSelect();
   </script>
 </body>
+
 </html>
