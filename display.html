@@ -15,9 +15,8 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       display: flex;
       flex-direction: column;
-      transition: background-color 0.4s ease; /* NEW: match wrapper fade speed */
+      transition: background-color 0.4s ease;
     }
-
 
     .top-bar {
       display: flex;
@@ -211,7 +210,7 @@
       if (!currentSettings) return;
 
       // Base background + image
-      document.body.style.backgroundColor   = currentSettings.bgColor;
+      document.body.style.backgroundColor = currentSettings.bgColor;
       if (currentSettings.centerBlockEnabled) {
         displayWrapper.style.backgroundColor = currentSettings.bgColor;
       } else {
@@ -228,9 +227,9 @@
       }
 
       // Base text colours
-      displayEl.style.color                 = currentSettings.textColor;
-      messageEl.style.color                 = currentSettings.textColor;
-      statusEl.style.color                  = currentSettings.textColor;
+      displayEl.style.color = currentSettings.textColor;
+      messageEl.style.color = currentSettings.textColor;
+      statusEl.style.color = currentSettings.textColor;
 
       displayEl.style.fontSize = (currentSettings.timerSize || 20) + 'vh';
       messageEl.style.fontSize = (currentSettings.messageSize || 4) + 'vh';
@@ -250,7 +249,7 @@
     function applyAlertColours(msRemaining) {
       if (!currentSettings) return;
 
-      const baseBg   = currentSettings.bgColor;
+      const baseBg = currentSettings.bgColor;
       const baseText = currentSettings.textColor;
 
       let bg   = baseBg;
@@ -264,10 +263,10 @@
                  Number(currentSettings.alert2Seconds);
 
       if (currentSettings.alert2Enabled && t2 > 0 && secRemaining <= t2) {
-        bg   = currentSettings.alert2Bg;
+        bg = currentSettings.alert2Bg;
         text = currentSettings.alert2Text;
       } else if (currentSettings.alert1Enabled && t1 > 0 && secRemaining <= t1) {
-        bg   = currentSettings.alert1Bg;
+        bg = currentSettings.alert1Bg;
         text = currentSettings.alert1Text;
       }
 
@@ -278,9 +277,9 @@
       } else {
         displayWrapper.style.backgroundColor = 'transparent';
       }
-      displayEl.style.color                = text;
-      messageEl.style.color                = text;
-      statusEl.style.color                 = text;
+      displayEl.style.color = text;
+      messageEl.style.color = text;
+      statusEl.style.color = text;
     }
 
     function clearFade() {
@@ -304,7 +303,7 @@
     }
 
     function calculateTargetTimestampFromDuration() {
-      const hours   = parseInt(currentSettings.durHours, 10)   || 0;
+      const hours = parseInt(currentSettings.durHours, 10)   || 0;
       const minutes = parseInt(currentSettings.durMinutes, 10) || 0;
       const seconds = parseInt(currentSettings.durSeconds, 10) || 0;
       const totalMs = ((hours * 60 + minutes) * 60 + seconds) * 1000;
@@ -390,7 +389,7 @@
         updateDisplay(diff);
         applyAlertColours(diff);
       } else {
-        const hours   = parseInt(currentSettings.durHours, 10)   || 0;
+        const hours = parseInt(currentSettings.durHours, 10)   || 0;
         const minutes = parseInt(currentSettings.durMinutes, 10) || 0;
         const seconds = parseInt(currentSettings.durSeconds, 10) || 0;
         const totalMs = ((hours * 60 + minutes) * 60 + seconds) * 1000;
