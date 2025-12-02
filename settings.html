@@ -178,6 +178,14 @@
       </div>
 
       <div class="row">
+        <label>Fade to black delay (seconds)
+          <input type="number" id="fadeToBlackSeconds" class="small-input" min="0" max="600">
+        </label>
+        <span class="hint">Time after the timer hits 0 before the screen fades to black.</span>
+      </div>
+
+
+      <div class="row">
         <label>Show status line
           <input type="checkbox" id="showStatus">
         </label>
@@ -274,7 +282,6 @@
 
     <div class="footer">
       <div>Settings are saved automatically on this PC (localStorage).</div>
-      <!-- NEW: reset-to-defaults button, same style as other footer buttons -->
       <button id="resetDefaultsBtn">Reset to defaults</button>
       <button id="openDisplayBtn">Open display in new tab</button>
     </div>
@@ -297,6 +304,7 @@
     const bgColorInput    = document.getElementById('bgColor');
     const textColorInput  = document.getElementById('textColor');
     const timerSizeInput  = document.getElementById('timerSize');
+    const fadeToBlackSecondsInput = document.getElementById('fadeToBlackSeconds');
     const showStatusInput = document.getElementById('showStatus');
 
     const messageTextInput = document.getElementById('messageText');
@@ -320,7 +328,7 @@
     const loadPresetBtn     = document.getElementById('loadPresetBtn');
     const deletePresetBtn   = document.getElementById('deletePresetBtn');
     const openDisplayBtn    = document.getElementById('openDisplayBtn');
-    const resetDefaultsBtn  = document.getElementById('resetDefaultsBtn'); // NEW
+    const resetDefaultsBtn  = document.getElementById('resetDefaultsBtn');
 
     function defaultSettings() {
       return {
@@ -332,7 +340,8 @@
         bgColor: '#000000',
         textColor: '#ffffff',
         timerSize: 20,
-        showStatus: true,
+        fadeToBlackSeconds: 2,
+        showStatus: false,
         messageText: '',
         messageSize: 4,
         alert1Enabled: false,
@@ -347,6 +356,7 @@
         alert2Text: '#ffffff'
       };
     }
+
 
     function applySettingsToForm(s) {
       if (s.mode === 'time') {
@@ -366,6 +376,7 @@
       bgColorInput.value   = s.bgColor;
       textColorInput.value = s.textColor;
       timerSizeInput.value = s.timerSize;
+      fadeToBlackSecondsInput.value = s.fadeToBlackSeconds;
       showStatusInput.checked = !!s.showStatus;
 
       messageTextInput.value = s.messageText;
@@ -394,6 +405,7 @@
         bgColor:   bgColorInput.value || '#000000',
         textColor: textColorInput.value || '#ffffff',
         timerSize: Number(timerSizeInput.value || '20'),
+        fadeToBlackSeconds: Math.max(0, Number(fadeToBlackSecondsInput.value || '5')),
         showStatus: !!showStatusInput.checked,
         messageText: messageTextInput.value || '',
         messageSize: Number(messageSizeInput.value || '4'),
@@ -534,11 +546,11 @@
     }
 
     // Event wiring
-    [
+        [
       modeDurationRadio, modeTimeRadio,
       durHoursInput, durMinutesInput, durSecondsInput,
       targetTimeInput,
-      bgColorInput, textColorInput, timerSizeInput, showStatusInput,
+      bgColorInput, textColorInput, timerSizeInput, fadeToBlackSecondsInput, showStatusInput,
       messageTextInput, messageSizeInput,
       alert1EnabledInput, alert1MinutesInput, alert1SecondsInput,
       alert1BgInput, alert1TextInput,

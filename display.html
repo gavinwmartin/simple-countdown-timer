@@ -162,7 +162,8 @@
         bgColor: '#000000',
         textColor: '#ffffff',
         timerSize: 20,
-        showStatus: true,
+        fadeToBlackSeconds: 2,
+        showStatus: false,
         messageText: '',
         messageSize: 4,
         alert1Enabled: false,
@@ -271,10 +272,17 @@
       stopCountdown(false);
 
       clearFade();
+
+      const fadeSeconds = currentSettings && typeof currentSettings.fadeToBlackSeconds === 'number'
+        ? currentSettings.fadeToBlackSeconds
+        : 5;
+      const fadeMs = Math.max(0, fadeSeconds) * 1000;
+
       fadeTimeout = setTimeout(() => {
         document.body.classList.add('fade-out');
-      }, 5000);
+      }, fadeMs);
     }
+
 
     function tick() {
       if (!isRunning || targetTimestamp == null) return;
