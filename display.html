@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Countdown Display</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background: #000;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 2s ease; /* <— NEW: smooth fade to black */
+    }
+
+    body.hide-cursor {
+      cursor: none;
+    }
+
+    /* TOP BAR — will be hidden in fullscreen */
+    .top-bar {
+      padding: 6px 10px;
+      font-size: 12px;
+      background: rgba(0,0,0,0.25);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.3s ease;
+    }
+
+    /* HIDE BAR IN FULLSCREEN */
+    body.fullscreen .top-bar {
+      display: none !important;
+    }
+
+    .top-bar button {
+      background: #444;
+      color: #fff;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .top-bar button:hover {
+      background: #666;
+    }
+
+    /* DISPLAY AREA */
+    .display-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      text-align: center;
+      transition: background-color 2s ease; /* <— fades smoothly */
+    }
+
+    .message {
+      margin-bottom: 8px;
+      font-weight: 500;
+      transition: opacity 2s ease;
+    }
+
+    .display {
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 2s ease;
+    }
+
+    .status {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-top: 6px;
+      transition: opacity 2s ease;
+    }
+
+    /* GLOBAL FADE-TO-BLACK */
+    body.fade-out {
+      background-color: #000 !important;
+    }
+    body.fade-out .display,
+    body.fade-out .message,
+    body.fade-out .status {
+      opacity: 0;
+    }
+    body.fade-out .display-wrapper {
+      background-color: #000 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div>Countdown Display</div>
+    <div>
+      <button id="startBtn">Start</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button id="resetBtn" disabled>Reset</button>
+      <button id="fullscreenBtn">Fullscreen</button>
+    </div>
+  </div>
+
+  <div class="display-wrapper" id="displayWrapper">
+    <div class="message" id="messageEl"></div>
+    <div class="display" id="displayEl">00:00:00</div>
+    <div class="status" id="statusEl">Stopped</div>
+  </div>
+
+  <script>
+    const SETTINGS_KEY = 'countdownSettings';
+
+    const displayWrapper = document.getElementById('displayWrapper');
+    const messageEl      = document.getElementById('messageEl');
+    const displayEl      = document.getElementById('displayEl');
+    const statusEl       = document.getElementById('statusEl');
+
+    const startBtn      = document.getElementById('startBtn');
+    const pauseBtn      = document.getElementById('pauseBtn');
+    const resetBtn      = document.getElementById('resetBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    let currentSettings = null;
+
+    let countdownInterval = null;
+    let targetTimestamp   = null;
+    let remainingMs       = null;
+    let isRunning         = false;
+    let wasStarted        = false;
+    let fadeTimeout       = null;
+
+    // Hide cursor after 5s
+    let cursorTimeout = null;
+    function resetCursorHideTimer() {
+      document.body.classList.remove('hide-cursor');
+      if (cursorTimeout) clearTimeout(cursorTimeout);
+      cursorTimeout = setTimeout(() => {
+        document.body.classList.add('hide-cursor');
+      }, 5000);
+    }
+    ['mousemove','mousedown','keydown','touchstart'].forEach(ev => {
+      document.addEventListener(ev, resetCursorHideTimer, { passive: true });
+    });
+    resetCursorHideTimer();
+
+    function defaultSettings() {
+      return {
+        mode: 'duration',
+        durHours: '0',
+        durMinutes: '5',
+        durSeconds: '0',
+        targetTime: '',
+        bgColor: '#000000',
+        textColor: '#ffffff',
+        timerSize: 20,
+        showStatus: true,
+        messageText: '',
+        messageSize: 4,
+        alert1Enabled: false,
+        alert1Minutes: 10,
+        alert1Seconds: 0,
+        alert1Bg: '#880000',
+        alert1Text: '#ffffff',
+        alert2Enabled: false,
+        alert2Minutes: 5,
+        alert2Seconds: 0,
+        alert2Bg: '#ff0000',
+        alert2Text: '#ffffff'
+      };
+    }
+
+    function loadSettings() {
+      let s;
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        s = raw ? Object.assign(defaultSettings(), JSON.parse(raw)) : defaultSettings();
+      } catch {
+        s = defaultSettings();
+      }
+      currentSettings = s;
+      applySettingsToDisplay();
+    }
+
+    function applySettingsToDisplay() {
+      if (!currentSettings) return;
+
+      document.body.style.backgroundColor   = currentSettings.bgColor;
+      displayWrapper.style.backgroundColor  = currentSettings.bgColor;
+      displayEl.style.color                 = currentSettings.textColor;
+      messageEl.style.color                 = currentSettings.textColor;
+      statusEl.style.color                  = currentSettings.textColor;
+
+      displayEl.style.fontSize = (currentSettings.timerSize || 20) + 'vh';
+      messageEl.style.fontSize = (currentSettings.messageSize || 4) + 'vh';
+
+      if (currentSettings.messageText) {
+        messageEl.textContent = currentSettings.messageText;
+        messageEl.style.display = 'block';
+      } else {
+        messageEl.textContent = '';
+        messageEl.style.display = 'none';
+      }
+
+      statusEl.style.display = currentSettings.showStatus ? 'block' : 'none';
+    }
+
+    function clearFade() {
+      if (fadeTimeout) clearTimeout(fadeTimeout);
+      fadeTimeout = null;
+      document.body.classList.remove('fade-out');
+    }
+
+    function formatTime(ms) {
+      ms = Math.max(ms, 0);
+      const totalSeconds = Math.floor(ms / 1000);
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      const pad = n => String(n).padStart(2,'0');
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    function updateDisplay(ms) {
+      displayEl.textContent = formatTime(ms);
+    }
+
+    function applyAlertColours(msRemaining) {
+      if (!currentSettings) return;
+
+      const baseBg   = currentSettings.bgColor;
+      const baseText = currentSettings.textColor;
+
+      let bg = baseBg;
+      let text = baseText;
+
+      const secRemaining = Math.floor(msRemaining / 1000);
+
+      // Thresholds
+      const t1 = Number(currentSettings.alert1Minutes) * 60 + Number(currentSettings.alert1Seconds);
+      const t2 = Number(currentSettings.alert2Minutes) * 60 + Number(currentSettings.alert2Seconds);
+
+      if (currentSettings.alert2Enabled && t2 > 0 && secRemaining <= t2) {
+        bg = currentSettings.alert2Bg;
+        text = currentSettings.alert2Text;
+      } else if (currentSettings.alert1Enabled && t1 > 0 && secRemaining <= t1) {
+        bg = currentSettings.alert1Bg;
+        text = currentSettings.alert1Text;
+      }
+
+      // Apply colours
+      document.body.style.backgroundColor   = bg;
+      displayWrapper.style.backgroundColor  = bg;
+      displayEl.style.color = text;
+      messageEl.style.color = text;
+      statusEl.style.color  = text;
+    }
+
+    function onFinished() {
+      updateDisplay(0);
+      statusEl.textContent = 'Finished';
+
+      stopCountdown(false);
+
+      clearFade();
+      fadeTimeout = setTimeout(() => {
+        document.body.classList.add('fade-out');
+      }, 5000);
+    }
+
+    function tick() {
+      if (!isRunning || targetTimestamp == null) return;
+      const now = Date.now();
+      const diff = targetTimestamp - now;
+      if (diff <= 0) {
+        applyAlertColours(0);
+        onFinished();
+        return;
+      }
+      remainingMs = diff;
+      updateDisplay(diff);
+      applyAlertColours(diff);
+    }
+
+    function startCountdown() {
+      clearFade();
+      loadSettings();
+
+      if (!wasStarted) {
+        if (currentSettings.mode === 'time') {
+          const timeStr = currentSettings.targetTime;
+          if (!timeStr) {
+            alert("No target time set. Open settings.html to configure a target time.");
+            return;
+          }
+          const [h,m,s] = timeStr.split(':').map(Number);
+          const now = new Date();
+          let target = new Date();
+          target.setHours(h || 0, m || 0, s || 0, 0);
+          if (target <= now) target.setDate(target.getDate() + 1);
+          targetTimestamp = target.getTime();
+        } else {
+          const h = Number(currentSettings.durHours || 0);
+          const m = Number(currentSettings.durMinutes || 0);
+          const s = Number(currentSettings.durSeconds || 0);
+          const totalMs = ((h * 3600) + (m * 60) + s) * 1000;
+          if (totalMs <= 0) {
+            alert("Duration is zero — set a duration first.");
+            return;
+          }
+          remainingMs = totalMs;
+          targetTimestamp = Date.now() + totalMs;
+        }
+      } else {
+        targetTimestamp = Date.now() + remainingMs;
+      }
+
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(tick, 250);
+      isRunning = true;
+      wasStarted = true;
+
+      startBtn.textContent = 'Resume';
+      pauseBtn.disabled = false;
+      resetBtn.disabled = false;
+      statusEl.textContent = 'Running';
+
+      tick();
+    }
+
+    function pauseCountdown() {
+      if (!isRunning) return;
+      tick();
+      isRunning = false;
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+      statusEl.textContent = 'Paused';
+      pauseBtn.disabled = true;
+      startBtn.textContent = 'Resume';
+    }
+
+    function stopCountdown(resetStatus = true) {
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = null;
+      isRunning = false;
+      startBtn.textContent = wasStarted ? 'Resume' : 'Start';
+      pauseBtn.disabled = true;
+      if (resetStatus) statusEl.textContent = 'Stopped';
+    }
+
+    function resetCountdown() {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+      isRunning = false;
+      wasStarted = false;
+      targetTimestamp = null;
+      remainingMs = null;
+      clearFade();
+      loadSettings();
+      updateDisplay(0);
+      statusEl.textContent = 'Stopped';
+      startBtn.textContent = 'Start';
+      pauseBtn.disabled = true;
+      resetBtn.disabled = true;
+    }
+
+    // Fullscreen toggle
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        document.body.classList.add('fullscreen');
+      } else {
+        document.body.classList.remove('fullscreen');
+      }
+    });
+
+    // Buttons
+    startBtn.addEventListener('click', startCountdown);
+    pauseBtn.addEventListener('click', pauseCountdown);
+    resetBtn.addEventListener('click', resetCountdown);
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === SETTINGS_KEY && !isRunning) loadSettings();
+    });
+
+    // Initialise
+    loadSettings();
+    updateDisplay(0);
+  </script>
+</body>
+</html>
