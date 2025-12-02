@@ -15,67 +15,70 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       display: flex;
       flex-direction: column;
-      transition: background-color 2s ease; /* <— NEW: smooth fade to black */
+      transition: background-color 0.4s ease; /* NEW: match wrapper fade speed */
     }
 
-    body.hide-cursor {
-      cursor: none;
-    }
 
-    /* TOP BAR — will be hidden in fullscreen */
     .top-bar {
-      padding: 6px 10px;
-      font-size: 12px;
-      background: rgba(0,0,0,0.25);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      transition: opacity 0.3s ease;
+      padding: 6px 10px;
+      background: #111;
+      border-bottom: 1px solid #333;
+      font-size: 12px;
+      color: #aaa;
+      user-select: none;
     }
 
-    /* HIDE BAR IN FULLSCREEN */
-    body.fullscreen .top-bar {
-      display: none !important;
+    .top-bar .buttons {
+      display: flex;
+      gap: 6px;
     }
 
     .top-bar button {
-      background: #444;
+      background: #333;
       color: #fff;
-      border: none;
-      padding: 4px 8px;
+      border: 1px solid #555;
       border-radius: 4px;
+      padding: 4px 8px;
       font-size: 12px;
       cursor: pointer;
     }
+
     .top-bar button:hover {
-      background: #666;
+      background: #555;
     }
 
-    /* DISPLAY AREA */
-    .display-wrapper {
+    .content {
       flex: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 10px;
+    }
+
+    .display-wrapper {
       text-align: center;
-      transition: background-color 2s ease; /* <— fades smoothly */
+      padding: 10px 20px;
+      border-radius: 8px;
+      background-color: #000;
+      transition: background-color 0.4s ease;
     }
 
     .message {
-      margin-bottom: 8px;
-      font-weight: 500;
-      transition: opacity 2s ease;
+      font-size: 4vh;
+      margin-bottom: 10px;
+      transition: opacity 0.4s ease;
     }
 
     .display {
-      font-weight: 700;
-      letter-spacing: 0.1em;
+      font-size: 20vh;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      transition: color 0.4s ease, opacity 0.4s ease;
       user-select: none;
       -webkit-user-select: none;
-      transition: opacity 2s ease;
     }
 
     .status {
@@ -88,6 +91,7 @@
     /* GLOBAL FADE-TO-BLACK */
     body.fade-out {
       background-color: #000 !important;
+      background-image: none !important;
     }
     body.fade-out .display,
     body.fade-out .message,
@@ -97,43 +101,54 @@
     body.fade-out .display-wrapper {
       background-color: #000 !important;
     }
+
+    /* Hide cursor when idle */
+    body.hide-cursor {
+      cursor: none;
+    }
+
+    /* Hide top bar when in page fullscreen */
+    body.fullscreen-active .top-bar {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="top-bar">
     <div>Countdown Display</div>
-    <div>
+    <div class="buttons">
       <button id="startBtn">Start</button>
-      <button id="pauseBtn" disabled>Pause</button>
-      <button id="resetBtn" disabled>Reset</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="resetBtn">Reset</button>
       <button id="fullscreenBtn">Fullscreen</button>
     </div>
   </div>
 
-  <div class="display-wrapper" id="displayWrapper">
-    <div class="message" id="messageEl"></div>
-    <div class="display" id="displayEl">00:00:00</div>
-    <div class="status" id="statusEl">Stopped</div>
+  <div class="content">
+    <div class="display-wrapper" id="displayWrapper">
+      <div class="message" id="message"></div>
+      <div class="display" id="display">00:00:00</div>
+      <div class="status" id="status">Idle</div>
+    </div>
   </div>
 
   <script>
     const SETTINGS_KEY = 'countdownSettings';
 
     const displayWrapper = document.getElementById('displayWrapper');
-    const messageEl      = document.getElementById('messageEl');
-    const displayEl      = document.getElementById('displayEl');
-    const statusEl       = document.getElementById('statusEl');
+    const displayEl = document.getElementById('display');
+    const messageEl = document.getElementById('message');
+    const statusEl  = document.getElementById('status');
 
-    const startBtn      = document.getElementById('startBtn');
-    const pauseBtn      = document.getElementById('pauseBtn');
-    const resetBtn      = document.getElementById('resetBtn');
+    const startBtn  = document.getElementById('startBtn');
+    const pauseBtn  = document.getElementById('pauseBtn');
+    const resetBtn  = document.getElementById('resetBtn');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-    let currentSettings = null;
-
-    let countdownInterval = null;
+    let currentSettings   = null;
     let targetTimestamp   = null;
-    let remainingMs       = null;
+    let remainingMs       = 0;
+    let intervalId        = null;
     let isRunning         = false;
     let wasStarted        = false;
     let fadeTimeout       = null;
@@ -162,8 +177,9 @@
         bgColor: '#000000',
         textColor: '#ffffff',
         timerSize: 20,
-        fadeToBlackSeconds: 2,
-        showStatus: false,
+        fadeToBlackSeconds: 5,
+        backgroundImageDataUrl: '',
+        showStatus: true,
         messageText: '',
         messageSize: 4,
         alert1Enabled: false,
@@ -194,8 +210,20 @@
     function applySettingsToDisplay() {
       if (!currentSettings) return;
 
+      // Base background + image
       document.body.style.backgroundColor   = currentSettings.bgColor;
       displayWrapper.style.backgroundColor  = currentSettings.bgColor;
+
+      if (currentSettings.backgroundImageDataUrl) {
+        document.body.style.backgroundImage = `url(${currentSettings.backgroundImageDataUrl})`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+      } else {
+        document.body.style.backgroundImage = '';
+      }
+
+      // Base text colours
       displayEl.style.color                 = currentSettings.textColor;
       messageEl.style.color                 = currentSettings.textColor;
       statusEl.style.color                  = currentSettings.textColor;
@@ -212,6 +240,39 @@
       }
 
       statusEl.style.display = currentSettings.showStatus ? 'block' : 'none';
+    }
+
+    // Apply alert colours based on remaining time
+    function applyAlertColours(msRemaining) {
+      if (!currentSettings) return;
+
+      const baseBg   = currentSettings.bgColor;
+      const baseText = currentSettings.textColor;
+
+      let bg   = baseBg;
+      let text = baseText;
+
+      const secRemaining = Math.floor(msRemaining / 1000);
+
+      const t1 = Number(currentSettings.alert1Minutes) * 60 +
+                 Number(currentSettings.alert1Seconds);
+      const t2 = Number(currentSettings.alert2Minutes) * 60 +
+                 Number(currentSettings.alert2Seconds);
+
+      if (currentSettings.alert2Enabled && t2 > 0 && secRemaining <= t2) {
+        bg   = currentSettings.alert2Bg;
+        text = currentSettings.alert2Text;
+      } else if (currentSettings.alert1Enabled && t1 > 0 && secRemaining <= t1) {
+        bg   = currentSettings.alert1Bg;
+        text = currentSettings.alert1Text;
+      }
+
+      // Apply colours (doesn't touch backgroundImage)
+      document.body.style.backgroundColor  = bg;
+      displayWrapper.style.backgroundColor = bg;
+      displayEl.style.color                = text;
+      messageEl.style.color                = text;
+      statusEl.style.color                 = text;
     }
 
     function clearFade() {
@@ -234,39 +295,105 @@
       displayEl.textContent = formatTime(ms);
     }
 
-    function applyAlertColours(msRemaining) {
-      if (!currentSettings) return;
+    function calculateTargetTimestampFromDuration() {
+      const hours   = parseInt(currentSettings.durHours, 10)   || 0;
+      const minutes = parseInt(currentSettings.durMinutes, 10) || 0;
+      const seconds = parseInt(currentSettings.durSeconds, 10) || 0;
+      const totalMs = ((hours * 60 + minutes) * 60 + seconds) * 1000;
+      const now = Date.now();
+      return now + totalMs;
+    }
 
-      const baseBg   = currentSettings.bgColor;
-      const baseText = currentSettings.textColor;
+    function calculateTargetTimestampFromTime() {
+      const now = new Date();
+      if (!currentSettings.targetTime) {
+        return Date.now();
+      }
+      const [h, m, s] = currentSettings.targetTime.split(':').map(v => parseInt(v, 10) || 0);
+      const target = new Date(now);
+      target.setHours(h, m, s || 0, 0);
+      if (target.getTime() <= now.getTime()) {
+        target.setDate(target.getDate() + 1);
+      }
+      return target.getTime();
+    }
 
-      let bg = baseBg;
-      let text = baseText;
+    function startCountdown() {
+      if (!currentSettings) loadSettings();
 
-      const secRemaining = Math.floor(msRemaining / 1000);
-
-      // Thresholds
-      const t1 = Number(currentSettings.alert1Minutes) * 60 + Number(currentSettings.alert1Seconds);
-      const t2 = Number(currentSettings.alert2Minutes) * 60 + Number(currentSettings.alert2Seconds);
-
-      if (currentSettings.alert2Enabled && t2 > 0 && secRemaining <= t2) {
-        bg = currentSettings.alert2Bg;
-        text = currentSettings.alert2Text;
-      } else if (currentSettings.alert1Enabled && t1 > 0 && secRemaining <= t1) {
-        bg = currentSettings.alert1Bg;
-        text = currentSettings.alert1Text;
+      if (!wasStarted) {
+        if (currentSettings.mode === 'time') {
+          targetTimestamp = calculateTargetTimestampFromTime();
+        } else {
+          targetTimestamp = calculateTargetTimestampFromDuration();
+        }
+        wasStarted = true;
+      } else if (remainingMs > 0) {
+        targetTimestamp = Date.now() + remainingMs;
       }
 
-      // Apply colours
-      document.body.style.backgroundColor   = bg;
-      displayWrapper.style.backgroundColor  = bg;
-      displayEl.style.color = text;
-      messageEl.style.color = text;
-      statusEl.style.color  = text;
+      if (intervalId) clearInterval(intervalId);
+      clearFade();
+      document.body.classList.remove('fade-out');
+
+      isRunning = true;
+      statusEl.textContent = 'Running';
+
+      intervalId = setInterval(tick, 200);
+      tick();
+    }
+
+    function pauseCountdown() {
+      if (!isRunning) return;
+      isRunning = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+      const now = Date.now();
+      if (targetTimestamp != null) {
+        remainingMs = Math.max(targetTimestamp - now, 0);
+      }
+      statusEl.textContent = 'Paused';
+      clearFade();
+    }
+
+    function resetCountdown() {
+      isRunning = false;
+      wasStarted = false;
+      remainingMs = 0;
+      targetTimestamp = null;
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+      statusEl.textContent = 'Idle';
+      clearFade();
+      loadSettings();
+      updateDisplayFromSettingsInitial();
+    }
+
+    function updateDisplayFromSettingsInitial() {
+      if (!currentSettings) return;
+      if (currentSettings.mode === 'time') {
+        const target = calculateTargetTimestampFromTime();
+        const now = Date.now();
+        const diff = target - now;
+        updateDisplay(diff);
+        applyAlertColours(diff);
+      } else {
+        const hours   = parseInt(currentSettings.durHours, 10)   || 0;
+        const minutes = parseInt(currentSettings.durMinutes, 10) || 0;
+        const seconds = parseInt(currentSettings.durSeconds, 10) || 0;
+        const totalMs = ((hours * 60 + minutes) * 60 + seconds) * 1000;
+        updateDisplay(totalMs);
+        applyAlertColours(totalMs);
+      }
     }
 
     function onFinished() {
       updateDisplay(0);
+      applyAlertColours(0);
       statusEl.textContent = 'Finished';
 
       stopCountdown(false);
@@ -283,13 +410,11 @@
       }, fadeMs);
     }
 
-
     function tick() {
       if (!isRunning || targetTimestamp == null) return;
       const now = Date.now();
       const diff = targetTimestamp - now;
       if (diff <= 0) {
-        applyAlertColours(0);
         onFinished();
         return;
       }
@@ -298,117 +423,81 @@
       applyAlertColours(diff);
     }
 
-    function startCountdown() {
-      clearFade();
-      loadSettings();
-
-      if (!wasStarted) {
-        if (currentSettings.mode === 'time') {
-          const timeStr = currentSettings.targetTime;
-          if (!timeStr) {
-            alert("No target time set. Open settings.html to configure a target time.");
-            return;
-          }
-          const [h,m,s] = timeStr.split(':').map(Number);
-          const now = new Date();
-          let target = new Date();
-          target.setHours(h || 0, m || 0, s || 0, 0);
-          if (target <= now) target.setDate(target.getDate() + 1);
-          targetTimestamp = target.getTime();
-        } else {
-          const h = Number(currentSettings.durHours || 0);
-          const m = Number(currentSettings.durMinutes || 0);
-          const s = Number(currentSettings.durSeconds || 0);
-          const totalMs = ((h * 3600) + (m * 60) + s) * 1000;
-          if (totalMs <= 0) {
-            alert("Duration is zero — set a duration first.");
-            return;
-          }
-          remainingMs = totalMs;
-          targetTimestamp = Date.now() + totalMs;
-        }
-      } else {
-        targetTimestamp = Date.now() + remainingMs;
-      }
-
-      if (countdownInterval) clearInterval(countdownInterval);
-      countdownInterval = setInterval(tick, 250);
-      isRunning = true;
-      wasStarted = true;
-
-      startBtn.textContent = 'Resume';
-      pauseBtn.disabled = false;
-      resetBtn.disabled = false;
-      statusEl.textContent = 'Running';
-
-      tick();
-    }
-
-    function pauseCountdown() {
-      if (!isRunning) return;
-      tick();
+    function stopCountdown(updateStatus = true) {
       isRunning = false;
-      clearInterval(countdownInterval);
-      countdownInterval = null;
-      statusEl.textContent = 'Paused';
-      pauseBtn.disabled = true;
-      startBtn.textContent = 'Resume';
-    }
-
-    function stopCountdown(resetStatus = true) {
-      if (countdownInterval) clearInterval(countdownInterval);
-      countdownInterval = null;
-      isRunning = false;
-      startBtn.textContent = wasStarted ? 'Resume' : 'Start';
-      pauseBtn.disabled = true;
-      if (resetStatus) statusEl.textContent = 'Stopped';
-    }
-
-    function resetCountdown() {
-      clearInterval(countdownInterval);
-      countdownInterval = null;
-      isRunning = false;
-      wasStarted = false;
-      targetTimestamp = null;
-      remainingMs = null;
-      clearFade();
-      loadSettings();
-      updateDisplay(0);
-      statusEl.textContent = 'Stopped';
-      startBtn.textContent = 'Start';
-      pauseBtn.disabled = true;
-      resetBtn.disabled = true;
-    }
-
-    // Fullscreen toggle
-    fullscreenBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen?.();
-      } else {
-        document.exitFullscreen?.();
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
       }
-    });
-
-    document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement) {
-        document.body.classList.add('fullscreen');
-      } else {
-        document.body.classList.remove('fullscreen');
+      if (updateStatus) {
+        statusEl.textContent = 'Stopped';
       }
-    });
+    }
 
-    // Buttons
+    // Fullscreen helpers
+    function isFullscreen() {
+      return !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+    }
+
+    function updateFullscreenClass() {
+      document.body.classList.toggle('fullscreen-active', isFullscreen());
+    }
+
+    function toggleFullscreen() {
+      if (!isFullscreen()) {
+        const el = document.documentElement;
+        if (el.requestFullscreen)            el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.mozRequestFullScreen)    el.mozRequestFullScreen();
+        else if (el.msRequestFullscreen)     el.msRequestFullscreen();
+      } else {
+        if (document.exitFullscreen)            document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.mozCancelFullScreen)  document.mozCancelFullScreen();
+        else if (document.msExitFullscreen)     document.msExitFullscreen();
+      }
+    }
+
+    document.addEventListener('fullscreenchange', updateFullscreenClass);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenClass);
+    document.addEventListener('mozfullscreenchange', updateFullscreenClass);
+    document.addEventListener('MSFullscreenChange', updateFullscreenClass);
+
+    // Button wiring
     startBtn.addEventListener('click', startCountdown);
     pauseBtn.addEventListener('click', pauseCountdown);
     resetBtn.addEventListener('click', resetCountdown);
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
 
-    window.addEventListener('storage', (e) => {
-      if (e.key === SETTINGS_KEY && !isRunning) loadSettings();
+    // Keyboard shortcuts: space=start/pause, r=reset, f=fullscreen toggle
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (isRunning) pauseCountdown(); else startCountdown();
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetCountdown();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
     });
 
-    // Initialise
+    // If settings are changed in another tab while NOT running, reload them
+    window.addEventListener('storage', (e) => {
+      if (e.key === SETTINGS_KEY && !isRunning) {
+        loadSettings();
+        updateDisplayFromSettingsInitial();
+      }
+    });
+
+    // Init
     loadSettings();
-    updateDisplay(0);
+    updateDisplayFromSettingsInitial();
+    updateFullscreenClass();
   </script>
 </body>
 </html>

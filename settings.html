@@ -70,6 +70,9 @@
       transform: scale(1.1);
       margin-right: 4px;
     }
+    input[type="file"] {
+      font-size: 13px;
+    }
     .small-input {
       width: 4em;
     }
@@ -184,6 +187,14 @@
         <span class="hint">Time after the timer hits 0 before the screen fades to black.</span>
       </div>
 
+      <div class="row">
+        <label>Background image
+          <input type="file" id="bgImageFile" accept="image/*">
+          <input type="hidden" id="bgImageDataUrl">
+        </label>
+        <button type="button" id="clearBgImageBtn">Clear image</button>
+        <span class="hint">Choose a local image to fill the background. Stored only in this browser.</span>
+      </div>
 
       <div class="row">
         <label>Show status line
@@ -276,7 +287,7 @@
         <button id="deletePresetBtn">Delete</button>
       </div>
       <div class="hint">
-        Presets store all settings above (mode, duration/time, colours, alerts, message, sizes).
+        Presets store all settings above (mode, duration/time, colours, alerts, message, sizes, background image, fade time).
       </div>
     </div>
 
@@ -306,6 +317,9 @@
     const timerSizeInput  = document.getElementById('timerSize');
     const fadeToBlackSecondsInput = document.getElementById('fadeToBlackSeconds');
     const showStatusInput = document.getElementById('showStatus');
+    const bgImageFileInput = document.getElementById('bgImageFile');
+    const bgImageDataUrlInput = document.getElementById('bgImageDataUrl');
+    const clearBgImageBtn = document.getElementById('clearBgImageBtn');
 
     const messageTextInput = document.getElementById('messageText');
     const messageSizeInput = document.getElementById('messageSize');
@@ -340,8 +354,9 @@
         bgColor: '#000000',
         textColor: '#ffffff',
         timerSize: 20,
-        fadeToBlackSeconds: 2,
-        showStatus: false,
+        fadeToBlackSeconds: 5,
+        backgroundImageDataUrl: '',
+        showStatus: true,
         messageText: '',
         messageSize: 4,
         alert1Enabled: false,
@@ -356,7 +371,6 @@
         alert2Text: '#ffffff'
       };
     }
-
 
     function applySettingsToForm(s) {
       if (s.mode === 'time') {
@@ -378,6 +392,9 @@
       timerSizeInput.value = s.timerSize;
       fadeToBlackSecondsInput.value = s.fadeToBlackSeconds;
       showStatusInput.checked = !!s.showStatus;
+
+      bgImageDataUrlInput.value = s.backgroundImageDataUrl || '';
+      clearBgImageBtn.disabled = !bgImageDataUrlInput.value;
 
       messageTextInput.value = s.messageText;
       messageSizeInput.value = s.messageSize;
@@ -406,6 +423,7 @@
         textColor: textColorInput.value || '#ffffff',
         timerSize: Number(timerSizeInput.value || '20'),
         fadeToBlackSeconds: Math.max(0, Number(fadeToBlackSecondsInput.value || '5')),
+        backgroundImageDataUrl: bgImageDataUrlInput.value || '',
         showStatus: !!showStatusInput.checked,
         messageText: messageTextInput.value || '',
         messageSize: Number(messageSizeInput.value || '4'),
@@ -446,7 +464,6 @@
       applySettingsToForm(s);
     }
 
-    // NEW: reset to defaults (UI + localStorage)
     function resetSettingsToDefaults() {
       const s = defaultSettings();
       applySettingsToForm(s);
@@ -546,7 +563,7 @@
     }
 
     // Event wiring
-        [
+    [
       modeDurationRadio, modeTimeRadio,
       durHoursInput, durMinutesInput, durSecondsInput,
       targetTimeInput,
@@ -578,8 +595,26 @@
       window.open('display.html', '_blank');
     });
 
-    // NEW: wire up reset button
     resetDefaultsBtn.addEventListener('click', resetSettingsToDefaults);
+
+    bgImageFileInput.addEventListener('change', () => {
+      const file = bgImageFileInput.files && bgImageFileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        bgImageDataUrlInput.value = reader.result;
+        clearBgImageBtn.disabled = !bgImageDataUrlInput.value;
+        saveSettings();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    clearBgImageBtn.addEventListener('click', () => {
+      bgImageDataUrlInput.value = '';
+      bgImageFileInput.value = '';
+      clearBgImageBtn.disabled = true;
+      saveSettings();
+    });
 
     // Init
     loadSettings();
