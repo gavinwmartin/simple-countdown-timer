@@ -197,6 +197,14 @@
       </div>
 
       <div class="row">
+        <label>
+          <input type="checkbox" id="centerBlockEnabled">
+          Show centre block background
+        </label>
+        <span class="hint">Turn off to make the timer background fully transparent.</span>
+      </div>
+
+      <div class="row">
         <label>Show status line
           <input type="checkbox" id="showStatus">
         </label>
@@ -318,6 +326,7 @@
     const fadeToBlackSecondsInput = document.getElementById('fadeToBlackSeconds');
     const showStatusInput = document.getElementById('showStatus');
     const bgImageFileInput = document.getElementById('bgImageFile');
+    const centerBlockEnabledInput = document.getElementById('centerBlockEnabled');
     const bgImageDataUrlInput = document.getElementById('bgImageDataUrl');
     const clearBgImageBtn = document.getElementById('clearBgImageBtn');
 
@@ -356,6 +365,7 @@
         timerSize: 20,
         fadeToBlackSeconds: 5,
         backgroundImageDataUrl: '',
+        centerBlockEnabled: true,
         showStatus: true,
         messageText: '',
         messageSize: 4,
@@ -395,6 +405,7 @@
 
       bgImageDataUrlInput.value = s.backgroundImageDataUrl || '';
       clearBgImageBtn.disabled = !bgImageDataUrlInput.value;
+      centerBlockEnabledInput.checked = !!s.centerBlockEnabled;
 
       messageTextInput.value = s.messageText;
       messageSizeInput.value = s.messageSize;
@@ -424,6 +435,7 @@
         timerSize: Number(timerSizeInput.value || '20'),
         fadeToBlackSeconds: Math.max(0, Number(fadeToBlackSecondsInput.value || '5')),
         backgroundImageDataUrl: bgImageDataUrlInput.value || '',
+        centerBlockEnabled: !!centerBlockEnabledInput.checked,
         showStatus: !!showStatusInput.checked,
         messageText: messageTextInput.value || '',
         messageSize: Number(messageSizeInput.value || '4'),
@@ -567,7 +579,7 @@
       modeDurationRadio, modeTimeRadio,
       durHoursInput, durMinutesInput, durSecondsInput,
       targetTimeInput,
-      bgColorInput, textColorInput, timerSizeInput, fadeToBlackSecondsInput, showStatusInput,
+      bgColorInput, textColorInput, timerSizeInput, fadeToBlackSecondsInput, centerBlockEnabledInput, showStatusInput,
       messageTextInput, messageSizeInput,
       alert1EnabledInput, alert1MinutesInput, alert1SecondsInput,
       alert1BgInput, alert1TextInput,

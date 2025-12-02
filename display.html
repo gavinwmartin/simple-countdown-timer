@@ -212,7 +212,11 @@
 
       // Base background + image
       document.body.style.backgroundColor   = currentSettings.bgColor;
-      displayWrapper.style.backgroundColor  = currentSettings.bgColor;
+      if (currentSettings.centerBlockEnabled) {
+        displayWrapper.style.backgroundColor = currentSettings.bgColor;
+      } else {
+        displayWrapper.style.backgroundColor = 'transparent';
+      }
 
       if (currentSettings.backgroundImageDataUrl) {
         document.body.style.backgroundImage = `url(${currentSettings.backgroundImageDataUrl})`;
@@ -269,7 +273,11 @@
 
       // Apply colours (doesn't touch backgroundImage)
       document.body.style.backgroundColor  = bg;
-      displayWrapper.style.backgroundColor = bg;
+      if (currentSettings.centerBlockEnabled) {
+        displayWrapper.style.backgroundColor = bg;
+      } else {
+        displayWrapper.style.backgroundColor = 'transparent';
+      }
       displayEl.style.color                = text;
       messageEl.style.color                = text;
       statusEl.style.color                 = text;
