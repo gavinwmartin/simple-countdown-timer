@@ -116,6 +116,7 @@
   <div class="top-bar">
     <div>Countdown Display</div>
     <div class="buttons">
+      <button id="settingsBtn">Settings</button>
       <button id="startBtn">Start</button>
       <button id="pauseBtn">Pause</button>
       <button id="resetBtn">Reset</button>
@@ -139,6 +140,7 @@
     const messageEl = document.getElementById('message');
     const statusEl  = document.getElementById('status');
 
+    const settingsBtn  = document.getElementById('settingsBtn');
     const startBtn  = document.getElementById('startBtn');
     const pauseBtn  = document.getElementById('pauseBtn');
     const resetBtn  = document.getElementById('resetBtn');
@@ -325,6 +327,10 @@
       return target.getTime();
     }
 
+    function toSettings() {
+      window.open('/', '_blank');
+    }
+
     function startCountdown() {
       if (!currentSettings) loadSettings();
 
@@ -476,6 +482,7 @@
     document.addEventListener('MSFullscreenChange', updateFullscreenClass);
 
     // Button wiring
+    settingsBtn.addEventListener('click', toSettings);
     startBtn.addEventListener('click', startCountdown);
     pauseBtn.addEventListener('click', pauseCountdown);
     resetBtn.addEventListener('click', resetCountdown);
