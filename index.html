@@ -142,7 +142,7 @@
       flex-wrap: wrap;
       gap: 8px;
     }
-    
+
   </style>
 </head>
 
@@ -321,7 +321,7 @@
       <div>Settings are saved automatically on this PC (localStorage).</div>
       <button id="howToUseBtn">How to use</button>
       <button id="resetDefaultsBtn">Reset to defaults</button>
-      <button id="openDisplayBtn">Open countdown in new tab</button>
+      <button id="openDisplayBtn">Open countdown (opens in new tab)</button>
     </div>
   </div>
 
@@ -369,6 +369,8 @@
     const savePresetBtn = document.getElementById('savePresetBtn');
     const loadPresetBtn = document.getElementById('loadPresetBtn');
     const deletePresetBtn = document.getElementById('deletePresetBtn');
+
+    const howToUseBtn = document.getElementById('howToUseBtn');
     const openDisplayBtn = document.getElementById('openDisplayBtn');
     const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
 
@@ -624,6 +626,12 @@
       // Make sure latest settings are saved before opening display
       saveSettings();
       window.open('display.html', '_blank');
+    });
+
+    openDisplayBtn.addEventListener('click', () => {
+      // Make sure latest settings are saved before opening display
+      saveSettings();
+      window.open('help.html', '_blank');
     });
 
     resetDefaultsBtn.addEventListener('click', resetSettingsToDefaults);
