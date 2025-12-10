@@ -631,7 +631,7 @@
     howToUseBtn.addEventListener('click', () => {
       // Make sure latest settings are saved before opening display
       saveSettings();
-      window.open('help.html', '_blank');
+      window.location.replace('help.html');
     });
 
     resetDefaultsBtn.addEventListener('click', resetSettingsToDefaults);
