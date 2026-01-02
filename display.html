@@ -447,6 +447,61 @@
       }
     }
 
+    // Remote control support (opt-in so the timer can run independently)
+    const REMOTE_CONTROL_KEY = 'countdownRemoteControlEnabled';
+
+    const controlActions = {
+      start: startCountdown,
+      pause: pauseCountdown,
+      reset: resetCountdown,
+      stop: () => stopCountdown(true),
+      fullscreen: toggleFullscreen,
+    };
+
+    function handleControlMessage(event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data && data.action && controlActions[data.action]) {
+          controlActions[data.action]();
+        }
+      } catch (err) {
+        console.warn('Invalid control message', err);
+      }
+    }
+
+    function remoteControlEnabled() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('remote')) {
+        const enabled = params.get('remote') !== '0';
+        localStorage.setItem(REMOTE_CONTROL_KEY, enabled ? '1' : '0');
+        return enabled;
+      }
+      return localStorage.getItem(REMOTE_CONTROL_KEY) === '1';
+    }
+
+    function connectControlSocket() {
+      if (!remoteControlEnabled()) return;
+
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const url = `${protocol}://${window.location.host}/control`;
+      let socket;
+
+      try {
+        socket = new WebSocket(url);
+      } catch (err) {
+        console.warn('Unable to connect to control socket', err);
+        return;
+      }
+
+      socket.addEventListener('message', handleControlMessage);
+      socket.addEventListener('close', () => {
+        setTimeout(connectControlSocket, 2000);
+      });
+      socket.addEventListener('error', () => {
+        socket.close();
+      });
+    }
+
     // Fullscreen helpers
     function isFullscreen() {
       return !!(
@@ -512,6 +567,7 @@
     loadSettings();
     updateDisplayFromSettingsInitial();
     updateFullscreenClass();
+    connectControlSocket();
   </script>
 </body>
 </html>

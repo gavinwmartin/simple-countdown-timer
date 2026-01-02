@@ -66,5 +66,20 @@ When running the countdown, you can use the following keyboard shortcuts:
 - `F` - toggles fullscreen mode on or off
 - `R` - resets the timer to the last set settings
 
+## Remote control and Companion module (optional)
+
+The countdown timer still runs as a completely standalone set of static files. If you want to drive it from Bitfocus Companion, enable the optional control layer:
+
+1. Install dependencies and start the control server (serves the HTML and exposes a WebSocket bridge):
+   ```bash
+   npm install
+   npm start
+   ```
+   The server defaults to port `3000` and exposes `/api/action` for control requests.
+2. Open `display.html` with remote control enabled (either once via query string or permanently after the first visit):
+   - Add `?remote=1` to the URL when launching `display.html` (for example `http://localhost:3000/display.html?remote=1`).
+   - The flag is remembered in `localStorage`; visit with `?remote=0` to disable again.
+3. In the Companion UI, add the module from `companion-module/` and configure the host/port of your control server. Actions in Companion will call the control API, which forwards the commands to any open `display.html` instances (that opted into remote control) via WebSocket.
+
 ## License
 This project is licensed under the MIT License — see the LICENSE file for details.
