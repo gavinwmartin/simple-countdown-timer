@@ -447,7 +447,9 @@
       }
     }
 
-    // Remote control support
+    // Remote control support (opt-in so the timer can run independently)
+    const REMOTE_CONTROL_KEY = 'countdownRemoteControlEnabled';
+
     const controlActions = {
       start: startCountdown,
       pause: pauseCountdown,
@@ -467,7 +469,19 @@
       }
     }
 
+    function remoteControlEnabled() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('remote')) {
+        const enabled = params.get('remote') !== '0';
+        localStorage.setItem(REMOTE_CONTROL_KEY, enabled ? '1' : '0');
+        return enabled;
+      }
+      return localStorage.getItem(REMOTE_CONTROL_KEY) === '1';
+    }
+
     function connectControlSocket() {
+      if (!remoteControlEnabled()) return;
+
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const url = `${protocol}://${window.location.host}/control`;
       let socket;
